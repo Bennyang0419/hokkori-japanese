@@ -313,8 +313,7 @@ export default function LandingPage() {
             {PLANS.map((plan, i) => (
               <FadeUp key={plan.name} delay={i * 0.1}>
                 <div className={`card p-6 h-full flex flex-col ${plan.highlighted ? 'ring-2' : ''}`}
-                  style={{ ringColor: plan.highlighted ? 'var(--accent)' : undefined,
-                           boxShadow: plan.highlighted ? '0 8px 32px rgba(196,120,90,0.2)' : undefined }}>
+                  style={{ boxShadow: plan.highlighted ? '0 8px 32px rgba(196,120,90,0.2)' : undefined }}>
                   {plan.highlighted && (
                     <div className="text-xs font-bold text-center py-1 px-3 rounded-full mb-4 self-start"
                       style={{ background:'var(--accent)', color:'#fff' }}>推薦</div>
