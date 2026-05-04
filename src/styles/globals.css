@@ -1,0 +1,259 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Zen+Maru+Gothic:wght@300;400;500;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Design Tokens — ほっこり Warm Palette
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+:root {
+  --cream:    #FAF7F2;
+  --milk:     #F5EFE6;
+  --biscuit:  #EDE0CC;
+  --latte:    #D4B896;
+  --caramel:  #B8936A;
+  --mocha:    #8B6347;
+  --espresso: #5C3D2E;
+  --blush:    #F7E8E0;
+  --peach:    #EDCBB8;
+  --warm:     #FFFCF8;
+  --accent:   #C4785A;
+  --accent-l: #E8A882;
+  --sage:     #E8EDE4;
+  --text-main: #3D2B1F;
+  --text-muted: #8B7355;
+  --text-light: #BFA98A;
+  --shadow:   rgba(91,61,46,0.08);
+  --shadow-md: rgba(91,61,46,0.14);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+}
+
+.dark {
+  --cream:    #1A1310;
+  --milk:     #221C15;
+  --biscuit:  #3A2E22;
+  --latte:    #6B5440;
+  --caramel:  #8B6347;
+  --mocha:    #C4A882;
+  --espresso: #E8D5C0;
+  --blush:    #2A1A12;
+  --peach:    #5C3020;
+  --warm:     #1E1610;
+  --accent:   #D4906E;
+  --accent-l: #B87050;
+  --text-main: #EDD5BB;
+  --text-muted: #A88B6E;
+  --text-light: #7A6050;
+  --shadow:   rgba(0,0,0,0.25);
+  --shadow-md: rgba(0,0,0,0.4);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Base Styles
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+* { box-sizing: border-box; }
+
+html {
+  font-family: 'Zen Maru Gothic', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--cream);
+  color: var(--text-main);
+  line-height: 1.7;
+}
+
+/* Japanese text rendering */
+:lang(ja) {
+  font-family: 'Noto Serif JP', 'Hiragino Mincho Pro', serif;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Component Layer
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@layer components {
+
+  /* Cards */
+  .card {
+    @apply bg-[var(--warm)] border border-[var(--biscuit)] rounded-[var(--radius-lg)];
+    box-shadow: 0 2px 12px var(--shadow);
+  }
+  .card-hover {
+    @apply card transition-all duration-200;
+  }
+  .card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px var(--shadow-md);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full
+           font-semibold text-white text-sm transition-all duration-200;
+    background: var(--accent);
+    box-shadow: 0 3px 12px rgba(196,120,90,0.3);
+  }
+  .btn-primary:hover {
+    background: var(--mocha);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(196,120,90,0.35);
+  }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full
+           font-medium text-sm transition-all duration-200;
+    background: var(--warm);
+    color: var(--espresso);
+    border: 1.5px solid var(--biscuit);
+  }
+  .btn-secondary:hover {
+    background: var(--milk);
+    border-color: var(--latte);
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full
+           font-medium text-sm transition-all duration-200;
+    color: var(--text-muted);
+  }
+  .btn-ghost:hover {
+    background: var(--milk);
+    color: var(--accent);
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center gap-1 text-xs font-semibold px-3 py-1 rounded-full;
+  }
+  .badge-n5 { background: #FEF3E2; color: #B8610A; border: 1px solid #FAC775; }
+  .badge-n4 { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+  .badge-n3 { background: #E3F2FD; color: #1565C0; border: 1px solid #90CAF9; }
+  .badge-n2 { background: #F3E5F5; color: #6A1B9A; border: 1px solid #CE93D8; }
+  .badge-n1 { background: #FCE4EC; color: #880E4F; border: 1px solid #F48FB1; }
+
+  /* Form inputs */
+  .input {
+    @apply w-full px-4 py-3 rounded-xl text-sm transition-all duration-200 outline-none;
+    background: var(--cream);
+    border: 1.5px solid var(--biscuit);
+    color: var(--text-main);
+  }
+  .input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(196,120,90,0.12);
+  }
+  .input::placeholder { color: var(--text-light); }
+
+  /* Section titles */
+  .section-label {
+    @apply text-xs font-bold uppercase tracking-widest;
+    color: var(--accent);
+  }
+  .section-title {
+    @apply font-serif text-2xl font-medium;
+    color: var(--espresso);
+  }
+
+  /* Progress bar */
+  .progress-track {
+    @apply h-2 rounded-full overflow-hidden;
+    background: var(--biscuit);
+  }
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500;
+    background: linear-gradient(90deg, var(--peach), var(--accent));
+  }
+
+  /* Tag */
+  .tag {
+    @apply inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-lg;
+    background: var(--blush);
+    color: var(--mocha);
+    border: 1px solid var(--peach);
+  }
+
+  /* Flashcard flip */
+  .flashcard-scene {
+    perspective: 1000px;
+  }
+  .flashcard-card {
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    position: relative;
+  }
+  .flashcard-card.flipped {
+    transform: rotateY(180deg);
+  }
+  .flashcard-front,
+  .flashcard-back {
+    @apply absolute inset-0;
+    backface-visibility: hidden;
+  }
+  .flashcard-back {
+    transform: rotateY(180deg);
+  }
+
+  /* AI chat bubble */
+  .chat-bubble-ai {
+    @apply rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-relaxed max-w-[85%];
+    background: var(--milk);
+    color: var(--text-main);
+    border: 1px solid var(--biscuit);
+  }
+  .chat-bubble-user {
+    @apply rounded-2xl rounded-tr-sm px-4 py-3 text-sm leading-relaxed max-w-[85%];
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply rounded-lg animate-pulse;
+    background: var(--biscuit);
+  }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Utility Layer
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@layer utilities {
+  .text-gradient-warm {
+    background: linear-gradient(135deg, var(--accent), var(--caramel));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .bg-warm { background: var(--warm); }
+  .bg-cream { background: var(--cream); }
+  .bg-milk  { background: var(--milk); }
+  .border-warm { border-color: var(--biscuit); }
+  .text-muted  { color: var(--text-muted); }
+  .text-light  { color: var(--text-light); }
+  .text-espresso { color: var(--espresso); }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Scrollbar
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb { background: var(--biscuit); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--latte); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Animation delays
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
