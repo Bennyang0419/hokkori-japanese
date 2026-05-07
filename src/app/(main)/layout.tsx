@@ -1,99 +1,87 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, MessageCircle, Layers, AlertCircle, BarChart2, Home, LogOut, ChevronLeft, ChevronRight, User, Sparkles, FileText, PenLine, ClipboardList, Calendar } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
+import { usePathname, useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { useAppStore } from '@/lib/store'
-import { cn } from '@/lib/utils'
 
-const NAV_GROUPS = [
-  { label:'學習', items:[
-    { href:'/dashboard',  icon:Home,         label:'ホーム',   sub:'今日のまとめ' },
-    { href:'/learn/N5',   icon:BookOpen,     label:'學習區',   sub:'N5〜N1 內容' },
-    { href:'/flashcards', icon:Layers,       label:'單字卡',   sub:'間隔記憶 SRS' },
-    { href:'/progress',   icon:BarChart2,    label:'進度',     sub:'打卡・統計' },
-  ]},
-  { label:'AI 練習', items:[
-    { href:'/quiz',       icon:Sparkles,     label:'AI 出題',  sub:'個人化練習' },
-    { href:'/mock-exam',  icon:ClipboardList,label:'模擬考',   sub:'JLPT 仿真' },
-    { href:'/mistakes',   icon:AlertCircle,  label:'錯題本',   sub:'弱點攻克' },
-  ]},
-  { label:'AI 工具', items:[
-    { href:'/chat',       icon:MessageCircle,label:'AI 助教',  sub:'24hr 在線' },
-    { href:'/writing',    icon:PenLine,      label:'寫作工具', sub:'批改・翻譯' },
-    { href:'/upload',     icon:FileText,     label:'筆記分析', sub:'上傳PDF/圖片' },
-    { href:'/study-plan', icon:Calendar,     label:'學習計畫', sub:'AI 個人規劃' },
-  ]},
+const NAV_ITEMS = [
+  { href:'/dashboard',  emoji:'🏠', label:'首頁' },
+  { href:'/learn/N5',   emoji:'📖', label:'學習' },
+  { href:'/quiz',       emoji:'✨', label:'出題' },
+  { href:'/flashcards', emoji:'📇', label:'單字卡' },
+  { href:'/mistakes',   emoji:'📝', label:'錯題本' },
+  { href:'/chat',       emoji:'🤖', label:'AI助教' },
+  { href:'/listening',  emoji:'🎧', label:'聽解' },
+  { href:'/shadowing',  emoji:'🎙️',  label:'跟讀' },
+  { href:'/writing',    emoji:'✍️',  label:'寫作' },
+  { href:'/upload',     emoji:'📸', label:'筆記' },
+  { href:'/mock-exam',  emoji:'📋', label:'模擬考' },
+  { href:'/progress',   emoji:'📊', label:'進度' },
+  { href:'/settings',   emoji:'⚙️',  label:'設定' },
 ]
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { profile, signOut } = useAuth()
-  const { sidebarOpen, setSidebarOpen } = useAppStore()
+  const router = useRouter()
+  const supabase = createClient()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background:'var(--cream)' }}>
-      <motion.aside animate={{ width: sidebarOpen ? 224 : 64 }} transition={{ duration:0.25 }}
-        className="flex-shrink-0 flex flex-col border-r overflow-hidden"
-        style={{ background:'var(--warm)', borderColor:'var(--biscuit)' }}>
-        <div className="flex items-center gap-3 p-4 border-b" style={{ borderColor:'var(--biscuit)', minHeight:60 }}>
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-base"
-            style={{ background:'linear-gradient(135deg,var(--peach),var(--caramel))' }}>🍵</div>
-          <AnimatePresence>{sidebarOpen && (
-            <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}>
-              <div className="font-bold text-sm" style={{ color:'var(--espresso)' }}>ほっこり日語</div>
-              <div className="text-xs" style={{ color:'var(--text-muted)' }}>AI 學習平台</div>
-            </motion.div>
-          )}</AnimatePresence>
-        </div>
-        <nav className="flex-1 overflow-y-auto p-2 space-y-3">
-          {NAV_GROUPS.map(({ label, items }) => (
-            <div key={label}>
-              {sidebarOpen && <div className="px-3 py-1 text-xs font-bold uppercase tracking-wider" style={{ color:'var(--text-light)' }}>{label}</div>}
-              <div className="space-y-0.5">
-                {items.map(({ href, icon:Icon, label:lbl, sub }) => {
-                  const active = pathname === href || pathname.startsWith(href+'/')
-                  return (
-                    <Link key={href} href={href}
-                      className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all"
-                      style={active ? { background:'var(--accent)', color:'#fff' } : { color:'var(--text-muted)' }}>
-                      <Icon size={16} className="flex-shrink-0"/>
-                      <AnimatePresence>{sidebarOpen && (
-                        <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} className="min-w-0">
-                          <div className="text-xs font-medium leading-none">{lbl}</div>
-                          <div className="text-xs mt-0.5 opacity-60 truncate">{sub}</div>
-                        </motion.div>
-                      )}</AnimatePresence>
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-        <div className="p-2 border-t space-y-0.5" style={{ borderColor:'var(--biscuit)' }}>
-          {profile && sidebarOpen && (
-            <div className="flex items-center gap-2 px-2.5 py-2" style={{ color:'var(--text-muted)' }}>
-              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
-                style={{ background:'var(--blush)', color:'var(--accent)' }}>
-                {profile.display_name?.[0]?.toUpperCase() ?? <User size={12}/>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium truncate" style={{ color:'var(--espresso)' }}>{profile.display_name}</div>
-                <div className="text-xs opacity-60">{profile.current_level} 學習中</div>
-              </div>
-            </div>
-          )}
-          <button onClick={signOut} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs transition-all hover:bg-[var(--milk)]" style={{ color:'var(--text-muted)' }}>
-            <LogOut size={14} className="flex-shrink-0"/>{sidebarOpen && <span>登出</span>}
-          </button>
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="w-full flex justify-center py-1.5 rounded-xl hover:bg-[var(--milk)] transition-all" style={{ color:'var(--text-light)' }}>
-            {sidebarOpen ? <ChevronLeft size={15}/> : <ChevronRight size={15}/>}
+    <div style={{ minHeight:'100vh', background:'var(--cream)' }}>
+
+      {/* ── Sticky Top Nav ── */}
+      <nav style={{
+        position:'sticky', top:0, zIndex:100,
+        background:'rgba(255,252,248,0.97)',
+        borderBottom:'1px solid var(--biscuit)',
+        backdropFilter:'blur(8px)',
+      }}>
+        {/* Top bar: logo + sign out */}
+        <div style={{ maxWidth:1200, margin:'0 auto', padding:'0 1rem', height:48, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <Link href="/dashboard" style={{ display:'flex', alignItems:'center', gap:8, textDecoration:'none' }}>
+            <div style={{ width:30, height:30, borderRadius:8, background:'linear-gradient(135deg,#EDCBB8,#B8936A)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>🍵</div>
+            <span style={{ fontWeight:700, fontSize:14, color:'var(--espresso)' }}>ほっこり日語</span>
+          </Link>
+          <button onClick={signOut}
+            style={{ fontSize:12, color:'var(--text-muted)', background:'none', border:'1px solid var(--biscuit)', borderRadius:999, padding:'5px 12px', cursor:'pointer' }}>
+            登出
           </button>
         </div>
-      </motion.aside>
-      <main className="flex-1 overflow-y-auto">{children}</main>
+
+        {/* Nav items row - horizontally scrollable on mobile */}
+        <div style={{
+          overflowX:'auto', display:'flex', gap:4, padding:'6px 12px 6px',
+          scrollbarWidth:'none',
+          maxWidth:1200, margin:'0 auto',
+        }}>
+          {NAV_ITEMS.map(({ href, emoji, label }) => {
+            const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href.split('/')[1] ? '/'+href.split('/')[1] : href))
+            return (
+              <Link key={href} href={href}
+                style={{
+                  display:'flex', alignItems:'center', gap:4, padding:'5px 10px',
+                  borderRadius:20, fontSize:12, fontWeight:500, whiteSpace:'nowrap',
+                  textDecoration:'none', flexShrink:0, transition:'all .15s',
+                  background: active ? 'var(--accent)' : 'transparent',
+                  color: active ? '#fff' : 'var(--text-muted)',
+                  border: `1px solid ${active ? 'var(--accent)' : 'transparent'}`,
+                }}>
+                <span>{emoji}</span>
+                <span>{label}</span>
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
+
+      {/* Main content */}
+      <main>{children}</main>
     </div>
   )
 }
