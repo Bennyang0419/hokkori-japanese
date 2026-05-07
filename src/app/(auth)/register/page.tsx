@@ -2,14 +2,16 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Mail, Lock, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
-import type { JLPTLevel } from '@/types'
 
-const LEVELS: JLPTLevel[] = ['N5','N4','N3','N2','N1']
-const LEVEL_DESC = ['完全初學者','認識基礎假名','日常簡單對話','商務溝通','近母語程度']
+const LEVELS = [
+  { lv:'N5', zh:'完全初學者', desc:'從零開始學日文', color:'#B8610A', bg:'#FEF3E2' },
+  { lv:'N4', zh:'認識基礎假名', desc:'想加強日常會話', color:'#2E7D32', bg:'#E8F5E9' },
+  { lv:'N3', zh:'日常簡單對話', desc:'要提升到中級程度', color:'#1565C0', bg:'#E3F2FD' },
+  { lv:'N2', zh:'商務溝通', desc:'準備挑戰中高級', color:'#6A1B9A', bg:'#F3E5F5' },
+  { lv:'N1', zh:'近母語程度', desc:'挑戰最高級認證', color:'#880E4F', bg:'#FCE4EC' },
+]
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -18,119 +20,106 @@ export default function RegisterPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [targetLevel, setTargetLevel] = useState<JLPTLevel>('N3')
+  const [targetLevel, setTargetLevel] = useState('N3')
   const [loading, setLoading] = useState(false)
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleStep1 = (e: React.FormEvent) => {
     e.preventDefault()
-    if (step === 1) { setStep(2); return }
+    if (!name || !email || !password) return
+    if (password.length < 6) { toast.error('密碼至少需要 6 個字元'); return }
+    setStep(2)
+  }
+
+  const handleRegister = async () => {
     setLoading(true)
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email, password,
-      options: {
-        data: { full_name: name },
-        emailRedirectTo: `${location.origin}/auth/callback`,
-      },
+      options: { data: { full_name: name } }
     })
     if (error) {
-      toast.error(error.message)
-    } else {
-      // Update target level
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase.from('profiles').update({ target_level: targetLevel }).eq('id', user.id)
-      }
-      toast.success('歡迎加入！請確認你的 Email ✉️')
-      router.push('/dashboard')
+      toast.error('註冊失敗：' + error.message)
+      setLoading(false)
+      return
     }
+    if (data.user) {
+      await supabase.from('profiles').update({ target_level: targetLevel }).eq('id', data.user.id)
+    }
+    toast.success('歡迎加入！☕')
+    router.push('/dashboard')
     setLoading(false)
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'var(--cream)' }}>
-      <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
-        className="card w-full max-w-sm p-8">
+    <div style={{ minHeight:'100vh', background:'var(--cream)', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
+      <div className="card" style={{ width:'100%', maxWidth:440, padding:'2rem' }}>
 
-        <div className="text-center mb-6">
-          <div className="text-3xl mb-2">🌸</div>
-          <h1 className="font-serif text-xl font-medium" style={{ color: 'var(--espresso)' }}>
-            はじめまして！
+        <div style={{ textAlign:'center', marginBottom:'1.5rem' }}>
+          <div style={{ fontSize:36, marginBottom:8 }}>{step===1 ? '🌸' : '🎯'}</div>
+          <h1 style={{ fontFamily:'serif', fontSize:'1.4rem', fontWeight:500, color:'var(--espresso)', margin:'0 0 4px' }}>
+            {step===1 ? 'はじめまして！' : '你的 JLPT 目標是？'}
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            {step === 1 ? '建立你的帳號' : '你的 JLPT 目標是？'}
+          <p style={{ fontSize:13, color:'var(--text-muted)', margin:0 }}>
+            {step===1 ? '建立你的帳號，開始學習日文' : '選擇目標等級，AI 幫你規劃學習計畫'}
           </p>
         </div>
 
         {/* Step dots */}
-        <div className="flex justify-center gap-2 mb-6">
+        <div style={{ display:'flex', justifyContent:'center', gap:8, marginBottom:'1.5rem' }}>
           {[1,2].map(s => (
-            <div key={s} className="w-2 h-2 rounded-full transition-all"
-              style={{ background: step >= s ? 'var(--accent)' : 'var(--biscuit)' }} />
+            <div key={s} style={{ width:8, height:8, borderRadius:'50%', background: step>=s ? 'var(--accent)' : 'var(--biscuit)', transition:'all .2s' }}/>
           ))}
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-4">
-          {step === 1 ? (
-            <>
-              <div className="relative">
-                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: 'var(--text-light)' }} />
-                <input placeholder="你的名字" value={name}
-                  onChange={e => setName(e.target.value)} required
-                  className="input pl-9" />
-              </div>
-              <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: 'var(--text-light)' }} />
-                <input type="email" placeholder="Email" value={email}
-                  onChange={e => setEmail(e.target.value)} required
-                  className="input pl-9" />
-              </div>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: 'var(--text-light)' }} />
-                <input type="password" placeholder="密碼（至少 6 位）" value={password}
-                  onChange={e => setPassword(e.target.value)} required minLength={6}
-                  className="input pl-9" />
-              </div>
-              <button type="submit" className="btn-primary w-full justify-center">
-                下一步 →
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-center" style={{ color: 'var(--text-muted)' }}>
-                選擇你的目標等級，我們會為你量身打造學習計畫
-              </p>
-              <div className="space-y-2">
-                {LEVELS.map((lv, i) => (
-                  <button key={lv} type="button"
-                    onClick={() => setTargetLevel(lv)}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-1.5 transition-all text-left"
-                    style={{
-                      border: `1.5px solid ${targetLevel === lv ? 'var(--accent)' : 'var(--biscuit)'}`,
-                      background: targetLevel === lv ? 'var(--blush)' : 'var(--warm)',
-                    }}>
-                    <span className={`badge badge-${lv.toLowerCase()}`}>{lv}</span>
-                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{LEVEL_DESC[i]}</span>
-                    {targetLevel === lv && <span className="ml-auto text-sm" style={{ color: 'var(--accent)' }}>✓</span>}
-                  </button>
-                ))}
-              </div>
-              <button type="submit" disabled={loading}
-                className="btn-primary w-full justify-center">
-                {loading ? '建立中...' : '開始學習 🎉'}
-              </button>
-            </>
-          )}
-        </form>
+        {step === 1 ? (
+          <form onSubmit={handleStep1}>
+            <div style={{ marginBottom:12 }}>
+              <input placeholder="你的名字" value={name} onChange={e=>setName(e.target.value)} required className="input"/>
+            </div>
+            <div style={{ marginBottom:12 }}>
+              <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required className="input"/>
+            </div>
+            <div style={{ marginBottom:16 }}>
+              <input type="password" placeholder="密碼（至少 6 位）" value={password} onChange={e=>setPassword(e.target.value)} required minLength={6} className="input"/>
+            </div>
+            <button type="submit" className="btn-primary" style={{ width:'100%', justifyContent:'center' }}>
+              下一步 →
+            </button>
+          </form>
+        ) : (
+          <div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:16 }}>
+              {LEVELS.map(({ lv, zh, desc, color, bg }) => (
+                <button key={lv} onClick={() => setTargetLevel(lv)}
+                  style={{
+                    display:'flex', alignItems:'center', gap:12, padding:'12px 14px',
+                    borderRadius:12, border:`1.5px solid ${targetLevel===lv ? color : 'var(--biscuit)'}`,
+                    background: targetLevel===lv ? bg : 'var(--warm)',
+                    cursor:'pointer', textAlign:'left', fontFamily:'inherit', transition:'all .15s',
+                  }}>
+                  <span style={{ fontWeight:700, fontSize:14, color, minWidth:24 }}>{lv}</span>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:500, color:'var(--espresso)' }}>{zh}</div>
+                    <div style={{ fontSize:11, color:'var(--text-muted)' }}>{desc}</div>
+                  </div>
+                  {targetLevel===lv && <span style={{ marginLeft:'auto', color }}>✓</span>}
+                </button>
+              ))}
+            </div>
+            <button onClick={handleRegister} disabled={loading} className="btn-primary"
+              style={{ width:'100%', justifyContent:'center' }}>
+              {loading ? '建立中...' : '開始學習 🎉'}
+            </button>
+            <button onClick={() => setStep(1)} style={{ width:'100%', marginTop:8, background:'none', border:'none', color:'var(--text-muted)', fontSize:13, cursor:'pointer', padding:'8px' }}>
+              ← 返回修改
+            </button>
+          </div>
+        )}
 
-        <p className="text-center text-xs mt-5" style={{ color: 'var(--text-muted)' }}>
-          已有帳號？{' '}
-          <Link href="/login" className="font-semibold" style={{ color: 'var(--accent)' }}>登入</Link>
+        <p style={{ textAlign:'center', fontSize:12, color:'var(--text-muted)', marginTop:16 }}>
+          已有帳號？ <Link href="/login" style={{ color:'var(--accent)', fontWeight:600, textDecoration:'none' }}>登入</Link>
         </p>
-      </motion.div>
+      </div>
     </div>
   )
 }
+
