@@ -1,141 +1,127 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
-import { Flame, BookOpen, Target, TrendingUp, ChevronRight, Star } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
-import { cn, formatRate } from '@/lib/utils'
-import type { DailyProgress } from '@/types'
 
-const LEVELS = ['N5','N4','N3','N2','N1'] as const
+const LEVELS = [
+  { lv:'N5', zh:'初心者', color:'#B8610A', bg:'#FEF3E2', desc:'基礎文法・800字' },
+  { lv:'N4', zh:'基礎級', color:'#2E7D32', bg:'#E8F5E9', desc:'日常會話・1500字' },
+  { lv:'N3', zh:'中級',   color:'#1565C0', bg:'#E3F2FD', desc:'一般情境・3750字' },
+  { lv:'N2', zh:'中高級', color:'#6A1B9A', bg:'#F3E5F5', desc:'商務日文・6000字' },
+  { lv:'N1', zh:'高級',   color:'#880E4F', bg:'#FCE4EC', desc:'近母語・10000字' },
+]
 
-function StatCard({ icon: Icon, label, value, sub, color }: {
-  icon: React.ElementType; label: string; value: string | number
-  sub?: string; color?: string
-}) {
-  return (
-    <motion.div initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }}
-      className="card p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-          style={{ background: 'var(--blush)' }}>
-          <Icon size={16} style={{ color: color ?? 'var(--accent)' }} />
-        </div>
-        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{label}</span>
-      </div>
-      <div className="text-2xl font-bold" style={{ color: 'var(--espresso)' }}>{value}</div>
-      {sub && <div className="text-xs mt-1" style={{ color: 'var(--text-light)' }}>{sub}</div>}
-    </motion.div>
-  )
-}
+const QUICK = [
+  { href:'/quiz',       emoji:'🎯', title:'AI 出題',   desc:'個人化練習' },
+  { href:'/flashcards', emoji:'📇', title:'單字卡',    desc:'間隔記憶複習' },
+  { href:'/chat',       emoji:'🤖', title:'AI 助教',   desc:'問文法・翻譯' },
+  { href:'/listening',  emoji:'🎧', title:'聽解練習',  desc:'AI 生成腳本' },
+  { href:'/writing',    emoji:'✍️',  title:'寫作工具',  desc:'作文批改' },
+  { href:'/mock-exam',  emoji:'📋', title:'模擬考',    desc:'JLPT 仿真' },
+]
 
 export default function DashboardPage() {
   const { profile } = useAuth()
-  const [progress, setProgress] = useState<DailyProgress | null>(null)
   const supabase = createClient()
+  const [progress, setProgress] = useState<any>(null)
 
   useEffect(() => {
     if (!profile) return
-    supabase
-      .from('daily_progress')
-      .select('*')
-      .eq('user_id', profile.id)
-      .eq('date', new Date().toISOString().split('T')[0])
-      .single()
-      .then(({ data }) => setProgress(data as DailyProgress | null))
+    const today = new Date().toISOString().split('T')[0]
+    supabase.from('daily_progress').select('*')
+      .eq('user_id', profile.id).eq('date', today).single()
+      .then(({ data }) => setProgress(data))
   }, [profile])
 
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'おはようございます' : hour < 18 ? 'こんにちは' : 'こんばんは'
-  const wordsGoal   = profile?.daily_goal_words   ?? 20
-  const quizzesGoal = profile?.daily_goal_quizzes ?? 10
+  const greeting = hour < 12 ? 'おはようございます 🌅' : hour < 18 ? 'こんにちは ☕' : 'こんばんは 🌙'
+  const wordsGoal = profile?.daily_goal_words ?? 20
+  const quizGoal = profile?.daily_goal_quizzes ?? 10
+  const wordsDone = progress?.words_studied ?? 0
+  const quizDone = progress?.quizzes_done ?? 0
+  const streak = progress?.streak_day ?? 0
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div style={{ minHeight:'100vh', background:'var(--cream)', padding:'1.5rem' }}>
+      <div style={{ maxWidth:960, margin:'0 auto' }}>
 
-      {/* Header */}
-      <motion.div initial={{ opacity:0, y:-8 }} animate={{ opacity:1, y:0 }}
-        className="mb-6">
-        <p className="text-sm mb-1" style={{ color: 'var(--text-muted)' }}>{greeting} 👋</p>
-        <h1 className="font-serif text-2xl font-medium" style={{ color: 'var(--espresso)' }}>
-          {profile?.display_name ?? '同學'}，今天也想學一下日文嗎 ☕
-        </h1>
-      </motion.div>
+        {/* Greeting */}
+        <div style={{ marginBottom:'1.5rem' }}>
+          <p style={{ fontSize:13, color:'var(--text-muted)', marginBottom:4 }}>{greeting}</p>
+          <h1 style={{ fontFamily:'serif', fontSize:'1.6rem', fontWeight:500, color:'var(--espresso)', margin:0 }}>
+            {profile?.display_name ?? '同學'}，今天也想學一下日文嗎？
+          </h1>
+        </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <StatCard icon={Flame}    label="連續學習" value={`${progress?.streak_day ?? 0} 天`} sub="繼續加油！" color="#E85D04" />
-        <StatCard icon={BookOpen} label="今日單字" value={`${progress?.words_studied ?? 0}/${wordsGoal}`} sub={`目標 ${wordsGoal} 個`} />
-        <StatCard icon={Target}   label="今日練習" value={`${progress?.quizzes_done ?? 0}/${quizzesGoal}`} sub={`目標 ${quizzesGoal} 題`} />
-        <StatCard icon={TrendingUp} label="正確率" value={formatRate(progress?.quizzes_done ?? 0, progress?.quizzes_done ?? 0)} sub="本週平均" />
-      </div>
-
-      {/* Today's goals progress */}
-      <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay: 0.1 }}
-        className="card p-4 mb-6">
-        <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--espresso)' }}>今日目標進度</h2>
-        <div className="space-y-3">
+        {/* Stats */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:12, marginBottom:'1.5rem' }}>
           {[
-            { label: '單字', done: progress?.words_studied ?? 0, goal: wordsGoal, emoji: '📇' },
-            { label: '練習題', done: progress?.quizzes_done ?? 0, goal: quizzesGoal, emoji: '✏️' },
-          ].map(({ label, done, goal, emoji }) => (
-            <div key={label}>
-              <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
-                <span>{emoji} {label}</span>
-                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{done} / {goal}</span>
+            { label:'🔥 連續天數', value:`${streak} 天`, sub:'繼續加油！' },
+            { label:'📇 今日單字', value:`${wordsDone}/${wordsGoal}`, sub:`目標 ${wordsGoal} 個` },
+            { label:'✏️ 今日練習', value:`${quizDone}/${quizGoal}`, sub:`目標 ${quizGoal} 題` },
+            { label:'⭐ 等級', value: profile?.current_level ?? 'N5', sub:'目前程度' },
+          ].map(s => (
+            <div key={s.label} className="card" style={{ padding:'1rem' }}>
+              <div style={{ fontSize:12, color:'var(--text-muted)', marginBottom:4 }}>{s.label}</div>
+              <div style={{ fontSize:'1.6rem', fontWeight:700, color:'var(--espresso)', lineHeight:1 }}>{s.value}</div>
+              <div style={{ fontSize:11, color:'var(--text-light)', marginTop:4 }}>{s.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Today progress bars */}
+        <div className="card" style={{ padding:'1.2rem', marginBottom:'1.5rem' }}>
+          <h2 style={{ fontSize:14, fontWeight:600, color:'var(--espresso)', marginBottom:12, margin:'0 0 12px' }}>今日目標進度</h2>
+          {[
+            { label:'📇 單字', done:wordsDone, goal:wordsGoal },
+            { label:'✏️ 練習題', done:quizDone, goal:quizGoal },
+          ].map(({ label, done, goal }) => (
+            <div key={label} style={{ marginBottom:10 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', fontSize:12, marginBottom:4, color:'var(--text-muted)' }}>
+                <span>{label}</span>
+                <span style={{ color:'var(--accent)', fontWeight:600 }}>{done} / {goal}</span>
               </div>
               <div className="progress-track">
-                <motion.div className="progress-fill"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, (done / goal) * 100)}%` }}
-                  transition={{ delay: 0.3, duration: 0.6 }} />
+                <div className="progress-fill" style={{ width:`${Math.min(100,(done/goal)*100)}%` }}/>
               </div>
             </div>
           ))}
         </div>
-      </motion.div>
 
-      {/* Level cards */}
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-semibold" style={{ color: 'var(--espresso)' }}>選擇學習等級</h2>
-      </div>
-      <div className="grid grid-cols-5 gap-3 mb-6">
-        {LEVELS.map((lvl, i) => (
-          <motion.div key={lvl}
-            initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }}
-            transition={{ delay: 0.1 * i }}>
-            <Link href={`/learn/${lvl}`}
-              className={cn('card-hover p-3 text-center block',
-                profile?.current_level === lvl ? 'ring-2 ring-[var(--accent)]' : '')}>
-              <div className="font-bold text-lg font-serif mb-1" style={{ color: 'var(--espresso)' }}>{lvl}</div>
-              <div className={cn('badge mx-auto', `badge-${lvl.toLowerCase()}`)}>
-                {['初心者','基礎','中級','中高','高級'][i]}
+        {/* Level selector */}
+        <h2 style={{ fontSize:14, fontWeight:600, color:'var(--espresso)', marginBottom:10 }}>選擇學習等級</h2>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10, marginBottom:'1.5rem' }}>
+          {LEVELS.map(({ lv, zh, color, bg, desc }) => (
+            <Link key={lv} href={`/learn/${lv}`}
+              style={{ textDecoration:'none', display:'block' }}>
+              <div className="card-hover" style={{ padding:'1rem', textAlign:'center',
+                border: profile?.current_level===lv ? `2px solid ${color}` : '1px solid var(--biscuit)' }}>
+                <div style={{ fontFamily:'serif', fontSize:'1.4rem', fontWeight:700, color, marginBottom:4 }}>{lv}</div>
+                <div style={{ fontSize:11, fontWeight:600, color, background:bg, padding:'2px 8px', borderRadius:8, display:'inline-block', marginBottom:4 }}>{zh}</div>
+                <div style={{ fontSize:10, color:'var(--text-light)' }}>{desc}</div>
               </div>
             </Link>
-          </motion.div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {/* Quick actions */}
-      <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--espresso)' }}>快速開始</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {[
-          { href: '/quiz',       emoji: '🎯', title: 'AI 出題練習', desc: '根據弱點個人化出題' },
-          { href: '/flashcards', emoji: '📇', title: '今日單字卡',   desc: `${wordsGoal} 張待複習` },
-          { href: '/chat',       emoji: '🤖', title: '問 AI 助教',   desc: '文法、翻譯、作文批改' },
-        ].map(({ href, emoji, title, desc }) => (
-          <Link key={href} href={href}
-            className="card-hover p-4 flex items-center gap-3">
-            <div className="text-2xl">{emoji}</div>
-            <div className="flex-1">
-              <div className="font-semibold text-sm" style={{ color: 'var(--espresso)' }}>{title}</div>
-              <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{desc}</div>
-            </div>
-            <ChevronRight size={16} style={{ color: 'var(--text-light)' }} />
-          </Link>
-        ))}
+        {/* Quick actions */}
+        <h2 style={{ fontSize:14, fontWeight:600, color:'var(--espresso)', marginBottom:10 }}>快速開始</h2>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))', gap:10 }}>
+          {QUICK.map(({ href, emoji, title, desc }) => (
+            <Link key={href} href={href} style={{ textDecoration:'none' }}>
+              <div className="card-hover" style={{ padding:'1rem', display:'flex', alignItems:'center', gap:10 }}>
+                <span style={{ fontSize:22 }}>{emoji}</span>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600, color:'var(--espresso)' }}>{title}</div>
+                  <div style={{ fontSize:11, color:'var(--text-muted)', marginTop:2 }}>{desc}</div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )
 }
+
